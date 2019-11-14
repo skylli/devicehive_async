@@ -17,7 +17,8 @@
 import sys
 import threading
 
-
+# todo
+from devicehive.handlers import Handler
 class Transport(object):
     """Transport class."""
 
@@ -34,7 +35,13 @@ class Transport(object):
         self._name = name
         self._error = error
         self._data_format = data_format_class(**data_format_options)
-        self._handler = handler_class(self, **handler_options)
+        # self._handler = handler_class(self, **handler_options)
+        print("handler_class: ", Handler)
+        print("type: ", type(Handler))
+        print("type Transport: ", type(Transport))
+        #  todo error
+        self._handler = Handler(self)
+        # self._handler = handler_class(self)
         self._connection_thread = None
         self._connected = False
         self._exception_info = None
@@ -68,9 +75,10 @@ class Transport(object):
         raise self._error('Connection has already created.')
 
     def _ensure_connected(self):
-        if self._connected:
-            return
-        raise self._error('Connection has not created.')
+        return True
+        # if self._connected:
+        #     return
+        # raise self._error('Connection has not created.')
 
     # todo remove
     def _connection(self, url, options):
@@ -111,12 +119,15 @@ class Transport(object):
         return self._exception_info
 
     def connect(self, url, **options):
-        self._ensure_not_connected()
-        self._connection_thread = threading.Thread(target=self._connection,
-                                                   args=(url, options))
-        self._connection_thread.name = '%s-transport-connection' % self._name
-        self._connection_thread.daemon = True
-        self._connection_thread.start()
+        self._connect(url, **options)
+        # self._connection(url, options)
+    # def connect(self, url, **options):
+    #     self._ensure_not_connected()
+    #     self._connection_thread = threading.Thread(target=self._connection,
+    #                                                args=(url, options))
+    #     self._connection_thread.name = '%s-transport-connection' % self._name
+    #     self._connection_thread.daemon = True
+    #     self._connection_thread.start()
 
     def disconnect(self):
         self._ensure_connected()
