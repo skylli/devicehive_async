@@ -56,15 +56,15 @@ class Device(object):
     def id(self):
         return self._id
 
-    def get(self, device_id):
+    async def get(self, device_id):
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('device/{deviceId}', deviceId=device_id)
         auth_api_request.action('device/get')
         auth_api_request.response_key('device')
-        device = auth_api_request.execute('Device get failure.')
+        device = await auth_api_request.execute('Device get failure.')
         self._init(device)
 
-    def save(self):
+    async def save(self):
         self._ensure_exists()
         device = {self.NAME_KEY: self.name,
                   self.DATA_KEY: self.data,
@@ -76,15 +76,15 @@ class Device(object):
         auth_api_request.url('device/{deviceId}', deviceId=self._id)
         auth_api_request.action('device/save')
         auth_api_request.set('device', device, True)
-        auth_api_request.execute('Device save failure.')
+        await auth_api_request.execute('Device save failure.')
 
-    def remove(self):
+    async def remove(self):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('device/{deviceId}', deviceId=self._id)
         auth_api_request.action('device/delete')
-        auth_api_request.execute('Device remove failure.')
+        await auth_api_request.execute('Device remove failure.')
         self._id = None
         self.name = None
         self.data = None
@@ -93,56 +93,61 @@ class Device(object):
         self.is_blocked = None
 
     def subscribe_insert_commands(self, names=(), timestamp=None):
-        self._ensure_exists()
-        return self._api.subscribe_insert_commands(self.id, names=names,
-                                                   timestamp=timestamp)
+        raise  NotImplemented
+        # self._ensure_exists()
+        # return self._api.subscribe_insert_commands(self.id, names=names,
+        #                                            timestamp=timestamp)
 
     def subscribe_update_commands(self, names=(), timestamp=None):
-        self._ensure_exists()
-        return self._api.subscribe_update_commands(self.id, names=names,
-                                                   timestamp=timestamp)
+        raise NotImplemented
+        # self._ensure_exists()
+        # return self._api.subscribe_update_commands(self.id, names=names,
+        #                                            timestamp=timestamp)
 
-    def list_commands(self, start=None, end=None, command=None, status=None,
+    async def list_commands(self, start=None, end=None, command=None, status=None,
                       sort_field=None, sort_order=None, take=None, skip=None):
         self._ensure_exists()
-        return self._api.list_commands(device_id=self._id, start=start, end=end,
+        return await self._api.list_commands(device_id=self._id, start=start, end=end,
                                        command=command, status=status,
                                        sort_field=sort_field,
                                        sort_order=sort_order,
                                        take=take, skip=skip)
 
-    def send_command(self, command_name, parameters=None, lifetime=None,
+    async def send_command(self, command_name, parameters=None, lifetime=None,
                      timestamp=None, status=None, result=None):
         self._ensure_exists()
-        return self._api.send_command(device_id=self._id,
+        return await self._api.send_command(device_id=self._id,
                                       command_name=command_name,
                                       parameters=parameters, lifetime=lifetime,
                                       timestamp=timestamp, status=status,
                                       result=result)
 
     def subscribe_notifications(self, names=(), timestamp=None):
-        self._ensure_exists()
-        return self._api.subscribe_notifications(self.id, names=names,
-                                                 timestamp=timestamp)
+        raise NotImplemented
+        # self._ensure_exists()
+        # return self._api.subscribe_notifications(self.id, names=names,
+        #                                          timestamp=timestamp)
 
     def list_notifications(self, start=None, end=None, notification=None,
                            sort_field=None, sort_order=None, take=None,
                            skip=None):
-        self._ensure_exists()
-        return self._api.list_notifications(device_id=self._id, start=start,
-                                            end=end,
-                                            notification=notification,
-                                            sort_field=sort_field,
-                                            sort_order=sort_order,
-                                            take=take, skip=skip)
+        raise NotImplemented
+        # self._ensure_exists()
+        # return self._api.list_notifications(device_id=self._id, start=start,
+        #                                     end=end,
+        #                                     notification=notification,
+        #                                     sort_field=sort_field,
+        #                                     sort_order=sort_order,
+        #                                     take=take, skip=skip)
 
     def send_notification(self, notification_name, parameters=None,
                           timestamp=None):
-        self._ensure_exists()
-        return self._api.send_notification(device_id=self._id,
-                                           notification_name=notification_name,
-                                           parameters=parameters,
-                                           timestamp=timestamp)
+        raise NotImplemented
+        # self._ensure_exists()
+        # return self._api.send_notification(device_id=self._id,
+        #                                    notification_name=notification_name,
+        #                                    parameters=parameters,
+        #                                    timestamp=timestamp)
 
 
 class DeviceError(ApiRequestError):

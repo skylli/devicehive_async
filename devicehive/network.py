@@ -47,15 +47,15 @@ class Network(object):
     def id(self):
         return self._id
 
-    def get(self, network_id):
+    async def get(self, network_id):
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('network/{networkId}', networkId=network_id)
         auth_api_request.action('network/get')
         auth_api_request.response_key('network')
-        network = auth_api_request.execute('Network get failure.')
+        network = await auth_api_request.execute('Network get failure.')
         self._init(network)
 
-    def save(self):
+    async def save(self):
         self._ensure_exists()
         network = {self.ID_KEY: self._id,
                    self.NAME_KEY: self.name,
@@ -65,24 +65,24 @@ class Network(object):
         auth_api_request.url('network/{networkId}', networkId=self._id)
         auth_api_request.action('network/update')
         auth_api_request.set('network', network, True)
-        auth_api_request.execute('Network save failure.')
+        await auth_api_request.execute('Network save failure.')
 
-    def remove(self, force=False):
+    async def remove(self, force=False):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('network/{networkId}', networkId=self._id)
         auth_api_request.action('network/delete')
         auth_api_request.param('force', force)
-        auth_api_request.execute('Network remove failure.')
+        await auth_api_request.execute('Network remove failure.')
         self._id = None
         self.name = None
         self.description = None
 
-    def list_devices(self, name=None, name_pattern=None, sort_field=None,
+    async def list_devices(self, name=None, name_pattern=None, sort_field=None,
                      sort_order=None, take=None, skip=None):
         self._ensure_exists()
-        return self._api.list_devices(name, name_pattern, self._id, self.name,
+        return await self._api.list_devices(name, name_pattern, self._id, self.name,
                                       sort_field, sort_order, take, skip)
 
     def subscribe_insert_commands(self, names=(), timestamp=None):

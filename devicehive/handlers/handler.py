@@ -29,4 +29,6 @@ class Handler(object):
         raise NotImplementedError
 
     def handle_disconnect(self):
-        raise NotImplementedError
+        # todo
+        print("handle disconnect")
+        # raise NotImplementedError

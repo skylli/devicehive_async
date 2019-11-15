@@ -47,16 +47,16 @@ class DeviceType(object):
     def id(self):
         return self._id
 
-    def get(self, device_type_id):
+    async def get(self, device_type_id):
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('devicetype/{deviceTypeId}',
                              deviceTypeId=device_type_id)
         auth_api_request.action('devicetype/get')
         auth_api_request.response_key('deviceType')
-        devicetype = auth_api_request.execute('DeviceType get failure.')
+        devicetype = await auth_api_request.execute('DeviceType get failure.')
         self._init(devicetype)
 
-    def save(self):
+    async def save(self):
         self._ensure_exists()
         device_type = {self.ID_KEY: self._id,
                        self.NAME_KEY: self.name,
@@ -66,24 +66,24 @@ class DeviceType(object):
         auth_api_request.url('devicetype/{deviceTypeId}', deviceTypeId=self._id)
         auth_api_request.action('devicetype/update')
         auth_api_request.set('deviceType', device_type, True)
-        auth_api_request.execute('DeviceType save failure.')
+        await auth_api_request.execute('DeviceType save failure.')
 
-    def remove(self, force=False):
+    async def remove(self, force=False):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('devicetype/{deviceTypeId}', deviceTypeId=self._id)
         auth_api_request.action('devicetype/delete')
         auth_api_request.param('force', force)
-        auth_api_request.execute('DeviceType remove failure.')
+        await auth_api_request.execute('DeviceType remove failure.')
         self._id = None
         self.name = None
         self.description = None
 
-    def list_devices(self, name=None, name_pattern=None, sort_field=None,
+    async def list_devices(self, name=None, name_pattern=None, sort_field=None,
                      sort_order=None, take=None, skip=None):
         self._ensure_exists()
-        return self._api.list_devices(name, name_pattern, self._id, self.name,
+        return await self._api.list_devices(name, name_pattern, self._id, self.name,
                                       sort_field, sort_order, take, skip)
 
     def subscribe_insert_commands(self, names=(), timestamp=None):

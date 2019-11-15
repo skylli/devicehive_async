@@ -14,8 +14,7 @@
 # =============================================================================
 
 
-from devicehive.data_formats.json_data_format import JsonDataFormat
-from devicehive.handlers import  handler as Handler
+from devicehive.handlers import  Handler
 from devicehive.api import Api
 import logging
 import time
@@ -68,7 +67,7 @@ class DeviceHive(Api):
         class_name = '%sTransport' % self._transport_name.title()
         transport_module = __import__(name, globals(), locals(), [name])
         transport_class = getattr(transport_module, class_name)
-        self._transport = transport_class(JsonDataFormat, {}, Handler,{})
+        self._transport = transport_class( Handler,{})
 
     @property
     def transport(self):

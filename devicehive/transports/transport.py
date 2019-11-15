@@ -30,35 +30,15 @@ class Transport(object):
     RESPONSE_CODE_KEY = 'code'
     RESPONSE_ERROR_KEY = 'error'
 
-    def __init__(self, name, error, data_format_class, data_format_options,
-                 handler_class, handler_options):
+    def __init__(self, name, error, handler_class, handler_options):
         self._name = name
         self._error = error
-        self._data_format = data_format_class(**data_format_options)
         # self._handler = handler_class(self, **handler_options)
-        print("handler_class: ", Handler)
-        print("type: ", type(Handler))
-        print("type Transport: ", type(Transport))
-        #  todo error
-        self._handler = Handler(self)
-        # self._handler = handler_class(self)
+
+        self._handler = handler_class(self)
         self._connection_thread = None
         self._connected = False
         self._exception_info = None
-
-    @property
-    def _text_data_type(self):
-        return self._data_format.text_data_type
-
-    @property
-    def _binary_data_type(self):
-        return self._data_format.binary_data_type
-
-    def _encode(self, obj):
-        return self._data_format.encode(obj)
-
-    def _decode(self, data):
-        return self._data_format.decode(data)
 
     def _handle_connect(self):
         self._handler.handle_connect()
@@ -85,7 +65,7 @@ class Transport(object):
         try:
             self._connect(url, **options)
             self._receive()
-            self._disconnect()
+            # self._disconnect()
         except:
             self._exception_info = sys.exc_info()
 
@@ -129,9 +109,10 @@ class Transport(object):
     #     self._connection_thread.daemon = True
     #     self._connection_thread.start()
 
-    def disconnect(self):
+    async def disconnect(self):
         self._ensure_connected()
         self._connected = False
+        await self._disconnect()
 
     def join(self, timeout=None):
         self._connection_thread.join(timeout)

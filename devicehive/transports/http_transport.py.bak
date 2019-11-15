@@ -16,7 +16,7 @@
 
 from devicehive.transports.transport import Transport
 from devicehive.transports.transport import TransportError
-import aiohttp
+import requests
 import threading
 import sys
 import time
@@ -25,10 +25,12 @@ import time
 class HttpTransport(Transport):
     """Http transport class."""
 
-    def __init__(self,  handler_class,handler_options):
-        super(HttpTransport, self).__init__('http', HttpTransportError,handler_class,
+    def __init__(self, data_format_class, data_format_options, handler_class,
+                 handler_options):
+        super(HttpTransport, self).__init__('http', HttpTransportError,
+                                            data_format_class,
+                                            data_format_options, handler_class,
                                             handler_options)
-        self.session = None
         self._url = None
         self._options = None
         self._events_queue_sleep = None
@@ -37,12 +39,10 @@ class HttpTransport(Transport):
         self._success_codes = [200, 201, 204]
 
     def _connect(self, url, **options):
-        ''' creat session. '''
         self._url = url
         self._options = options
-        # self._events_queue_sleep_time = options.pop('events_queue_sleep_time',
-        #                                             1e-6)
-        self.session = aiohttp.ClientSession()
+        self._events_queue_sleep_time = options.pop('events_queue_sleep_time',
+                                                    1e-6)
         if not self._url.endswith('/'):
             self._url += '/'
         self._connected = True
@@ -58,34 +58,25 @@ class HttpTransport(Transport):
                 if not self._connected:
                     return
 
-    async def _disconnect(self):
+    def _disconnect(self):
         self._events_queue = []
         self._subscription_ids = []
-        if self.session:
-           await self.session.close()
-
         self._handle_disconnect()
 
-    async def _request_call(self, method, url, **params):
+    def _request_call(self, method, url, **params):
         options = self._options.copy()
         options.update(params)
-        if options.get("data"):
-            options["json"] = options.pop("data")
-        # args = {}
-        # for key, value in options.items():
-        #     if  value:
-        #         args.update({key:value})
-        try :
-            async with self.session.request(method, url, **options) as response:
-            # async with self.session.post(url) as response:
-                code = response.status
-                return code, await response.json()
-
-        except Exception as http_error:
+        try:
+            response = requests.request(method, url, **options)
+            code = response.status_code
+            if self._text_data_type:
+                return code, response.text
+            return code, response.content
+        except requests.RequestException as http_error:
             error = http_error
         raise self._error(error)
 
-    async def _request(self, request_id, action, request, **params):
+    def _request(self, request_id, action, request, **params):
         method = params.pop('method', 'GET')
         url = self._url + params.pop('url')
         request_delete_keys = params.pop('request_delete_keys', [])
@@ -96,8 +87,8 @@ class HttpTransport(Transport):
         if request:
             if request_key:
                 request = request[request_key]
-            params['data'] = request
-        code, data = await self._request_call(method, url, **params)
+            params['data'] = self._encode(request)
+        code, data = self._request_call(method, url, **params)
         response = {self.REQUEST_ID_KEY: request_id,
                     self.REQUEST_ACTION_KEY: action}
         if code in self._success_codes:
@@ -105,16 +96,18 @@ class HttpTransport(Transport):
             if not data:
                 return response
             if response_key:
-                response[response_key] = data
+                response[response_key] = self._decode(data)
                 return response
-            response.update( data )
+            response.update(self._decode(data))
             return response
         response[self.RESPONSE_STATUS_KEY] = self.RESPONSE_ERROR_STATUS
         response[self.RESPONSE_CODE_KEY] = code
         if not data:
             return response
-
-        response_error = data
+        try:
+            response_error = self._decode(data)['message']
+        except Exception:
+            response_error = data
         response[self.RESPONSE_ERROR_KEY] = response_error
         return response
 
@@ -137,7 +130,7 @@ class HttpTransport(Transport):
                 self.RESPONSE_STATUS_KEY: self.RESPONSE_SUCCESS_STATUS,
                 response_subscription_id_key: subscription_id}
 
-    async def _subscription_probe(self, subscription_id, request_id, action, request,
+    def _subscription_probe(self, subscription_id, request_id, action, request,
                             params):
         params = params.copy()
         params.pop('response_error_handler', None)
@@ -148,9 +141,9 @@ class HttpTransport(Transport):
 
         params['params']['waitTimeout'] = 0
         params['params']['limit'] = 0
-        return  await self._request(request_id, action, request.copy(), **params)
+        return self._request(request_id, action, request.copy(), **params)
 
-    async def _subscription(self, subscription_id, request_id, action, request,
+    def _subscription(self, subscription_id, request_id, action, request,
                       params):
         response_error_handler = params.pop('response_error_handler', None)
         response_error_handler_args = params.pop('response_error_handler_args',
@@ -163,7 +156,7 @@ class HttpTransport(Transport):
             'response_subscription_id_key', 'subscriptionId')
         while subscription_id in self._subscription_ids:
             try:
-                response = await self._request(request_id, action, request.copy(),
+                response = self._request(request_id, action, request.copy(),
                                          **params)
                 if subscription_id not in self._subscription_ids:
                     return
@@ -177,7 +170,7 @@ class HttpTransport(Transport):
                     if not response_error_handler(params, response_code,
                                                   *response_error_handler_args):
                         raise self._error(error)
-                    response = await self._request(request_id, action, request.copy(),
+                    response = self._request(request_id, action, request.copy(),
                                              **params)
                     if subscription_id not in self._subscription_ids:
                         return
@@ -212,7 +205,7 @@ class HttpTransport(Transport):
                 self.REQUEST_ACTION_KEY: action,
                 self.RESPONSE_STATUS_KEY: self.RESPONSE_SUCCESS_STATUS}
 
-    async def send_request(self, request_id, action, request, **params):
+    def send_request(self, request_id, action, request, **params):
         self._ensure_connected()
         subscription_request = params.pop('subscription_request', {})
         response_subscription_id_key = params.pop(
@@ -227,10 +220,10 @@ class HttpTransport(Transport):
             response = self._remove_subscription_request(
                 request_id, action, **remove_subscription_request)
         else:
-            response = await self._request(request_id, action, request, **params)
+            response = self._request(request_id, action, request, **params)
         self._events_queue.append([response])
 
-    async def request(self, request_id, action, request, **params):
+    def request(self, request_id, action, request, **params):
         self._ensure_connected()
         subscription_request = params.pop('subscription_request', {})
         response_subscription_id_key = params.pop(
@@ -244,7 +237,7 @@ class HttpTransport(Transport):
         if remove_subscription_request:
             return self._remove_subscription_request(
                 request_id, action, **remove_subscription_request)
-        return await self._request(request_id, action, request, **params)
+        return self._request(request_id, action, request, **params)
 
 
 class HttpTransportError(TransportError):

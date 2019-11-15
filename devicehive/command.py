@@ -75,7 +75,7 @@ class Command(object):
     def last_updated(self):
         return self._last_updated
 
-    def save(self):
+    async def save(self):
         command = {self.STATUS_KEY: self.status, self.RESULT_KEY: self.result}
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('PUT')
@@ -83,4 +83,4 @@ class Command(object):
                              deviceId=self._device_id, commandId=self._id)
         auth_api_request.action('command/update')
         auth_api_request.set('command', command, True)
-        auth_api_request.execute('Command save failure.')
+        await auth_api_request.execute('Command save failure.')

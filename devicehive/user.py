@@ -98,23 +98,23 @@ class User(object):
     def all_device_types_available(self):
         return self._all_device_types_available
 
-    def get_current(self):
+    async def get_current(self):
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('user/current')
         auth_api_request.action('user/getCurrent')
         auth_api_request.response_key('current')
-        user = auth_api_request.execute('Current user get failure.')
+        user = await auth_api_request.execute('Current user get failure.')
         self._init(user)
 
-    def get(self, user_id):
+    async def get(self, user_id):
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('user/{userId}', userId=user_id)
         auth_api_request.action('user/get')
         auth_api_request.response_key('user')
-        user = auth_api_request.execute('User get failure.')
+        user = await auth_api_request.execute('User get failure.')
         self._init(user)
 
-    def save(self):
+    async def save(self):
         self._ensure_exists()
         user = {self.ROLE_KEY: self.role,
                 self.STATUS_KEY: self.status,
@@ -124,9 +124,9 @@ class User(object):
         auth_api_request.url('user/{userId}', userId=self._id)
         auth_api_request.action('user/update')
         auth_api_request.set('user', user, True)
-        auth_api_request.execute('User save failure.')
+        await auth_api_request.execute('User save failure.')
 
-    def update_password(self, password):
+    async def update_password(self, password):
         self._ensure_exists()
         user = {self.PASSWORD_KEY: password}
         auth_api_request = AuthApiRequest(self._api)
@@ -134,15 +134,15 @@ class User(object):
         auth_api_request.url('user/{userId}', userId=self._id)
         auth_api_request.action('user/update')
         auth_api_request.set('user', user, True)
-        auth_api_request.execute('User password update failure.')
+        await auth_api_request.execute('User password update failure.')
 
-    def remove(self):
+    async def remove(self):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('user/{userId}', userId=self._id)
         auth_api_request.action('user/delete')
-        auth_api_request.execute('User remove failure.')
+        await auth_api_request.execute('User remove failure.')
         self._id = None
         self._login = None
         self._last_login = None
@@ -152,65 +152,65 @@ class User(object):
         self.status = None
         self.data = None
 
-    def list_networks(self):
+    async def list_networks(self):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('user/{userId}', userId=self._id)
         auth_api_request.action('user/get')
         auth_api_request.response_key('user')
-        user = auth_api_request.execute('List networks failure.')
+        user = await auth_api_request.execute('List networks failure.')
         return [Network(self._api, network)
                 for network in user[User.NETWORKS_KEY]]
 
-    def assign_network(self, network_id):
+    async def assign_network(self, network_id):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('PUT')
         auth_api_request.url('user/{userId}/network/{networkId}',
                              userId=self._id, networkId=network_id)
         auth_api_request.action('user/assignNetwork')
-        auth_api_request.execute('Assign network failure.')
+        await auth_api_request.execute('Assign network failure.')
 
-    def unassign_network(self, network_id):
+    async def unassign_network(self, network_id):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('user/{userId}/network/{networkId}',
                              userId=self._id, networkId=network_id)
         auth_api_request.action('user/unassignNetwork')
-        auth_api_request.execute('Unassign network failure.')
+        await auth_api_request.execute('Unassign network failure.')
 
-    def list_device_types(self):
+    async def list_device_types(self):
         self._ensure_exists()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.url('user/{userId}/devicetype', userId=self._id)
         auth_api_request.action('user/getDeviceTypes')
         auth_api_request.response_key('deviceTypes')
-        device_types = auth_api_request.execute('List device types failure.')
+        device_types = await auth_api_request.execute('List device types failure.')
         return [DeviceType(self._api, device_type)
                 for device_type in device_types]
 
-    def allow_all_device_types(self):
+    async def allow_all_device_types(self):
         self._ensure_exists()
         self._ensure_not_all_device_types_available()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('PUT')
         auth_api_request.url('user/{userId}/devicetype/all', userId=self._id)
         auth_api_request.action('user/allowAllDeviceTypes')
-        auth_api_request.execute('Assign all device types failure.')
+        await auth_api_request.execute('Assign all device types failure.')
         self._all_device_types_available = True
 
-    def disallow_all_device_types(self):
+    async def disallow_all_device_types(self):
         self._ensure_exists()
         self._ensure_all_device_types_available()
         auth_api_request = AuthApiRequest(self._api)
         auth_api_request.method('DELETE')
         auth_api_request.url('user/{userId}/devicetype/all', userId=self._id)
         auth_api_request.action('user/disallowAllDeviceTypes')
-        auth_api_request.execute('Unassign device type failure.')
+        await auth_api_request.execute('Unassign device type failure.')
         self._all_device_types_available = False
 
-    def assign_device_type(self, device_type_id):
+    async def assign_device_type(self, device_type_id):
         self._ensure_exists()
         self._ensure_not_all_device_types_available()
         auth_api_request = AuthApiRequest(self._api)
@@ -218,9 +218,9 @@ class User(object):
         auth_api_request.url('user/{userId}/devicetype/{deviceTypeId}',
                              userId=self._id, deviceTypeId=device_type_id)
         auth_api_request.action('user/assignDeviceType')
-        auth_api_request.execute('Assign device type failure.')
+        await auth_api_request.execute('Assign device type failure.')
 
-    def unassign_device_type(self, device_type_id):
+    async def unassign_device_type(self, device_type_id):
         self._ensure_exists()
         self._ensure_not_all_device_types_available()
         auth_api_request = AuthApiRequest(self._api)
@@ -228,7 +228,7 @@ class User(object):
         auth_api_request.url('user/{userId}/devicetype/{deviceTypeId}',
                              userId=self._id, deviceTypeId=device_type_id)
         auth_api_request.action('user/unassignDeviceType')
-        auth_api_request.execute('Unassign device type failure.')
+        await auth_api_request.execute('Unassign device type failure.')
 
 
 class UserError(ApiRequestError):

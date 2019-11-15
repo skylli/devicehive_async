@@ -15,13 +15,20 @@
 
 from devicehive.device_hive import DeviceHive
 import logging
+import aiohttp
+import asyncio
+
+async def make_reqeust():
+
+    url = 'http://192.168.0.12/api/rest'
+    login = 'sky'
+    password = "sky9527"
+    device_hive_api = DeviceHive(url, login=login, password=password)
+    info = await device_hive_api.get_current_user()
+    print(info)
+    await device_hive_api.disconnect()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-url = 'http://iotcloud.nielink.com/api/rest'
-refresh_token = 'eyJhbGciOiJIUzI1NiJ9.eyJwYXlsb2FkIjp7ImEiOlswXSwiZSI6MTU3Mzc1MDAyMDU3MCwidCI6MSwidSI6MiwibiI6WyIqIl0sImR0IjpbIioiXX19.J7gRKNclxEro4RSMsTKTCMPfx0n3fVgm8HS2CfBUHeE'
-device_hive_api = DeviceHive(url, refresh_token=refresh_token)
-info = device_hive_api.get_info()
-print(info)
-cluster_info = device_hive_api.get_cluster_info()
-print("get info ", cluster_info)
+loop = asyncio.get_event_loop()
+loop.run_until_complete(make_reqeust())

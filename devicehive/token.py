@@ -31,22 +31,22 @@ class Token(object):
         self._refresh_token = auth.get('refresh_token')
         self._access_token = auth.get('access_token')
 
-    def _auth(self):
+    async def _auth(self):
         api_request = ApiRequest(self._api)
         if not api_request.websocket_transport:
             return
         api_request.action('authenticate')
         api_request.set('token', self._access_token)
-        api_request.execute('Authentication failure.')
+        await api_request.execute('Authentication failure.')
 
-    def _tokens(self):
+    async def _tokens(self):
         api_request = ApiRequest(self._api)
         api_request.method('POST')
         api_request.url('token')
         api_request.action('token')
         api_request.set('login', self._login)
         api_request.set('password', self._password)
-        tokens = api_request.execute('Login failure.')
+        tokens = await api_request.execute('Login failure.')
         self._refresh_token = tokens['refreshToken']
         self._access_token = tokens['accessToken']
 
@@ -60,7 +60,7 @@ class Token(object):
         auth_header_value = self.AUTH_HEADER_VALUE_PREFIX + self._access_token
         return auth_header_name, auth_header_value
 
-    def refresh(self):
+    async def refresh(self):
         if not self._refresh_token:
             raise TokenError('Can\'t refresh token without "refresh_token"')
         api_request = ApiRequest(self._api)
@@ -68,20 +68,20 @@ class Token(object):
         api_request.url('token/refresh')
         api_request.action('token/refresh')
         api_request.set('refreshToken', self._refresh_token)
-        tokens = api_request.execute('Token refresh failure.')
+        tokens = await api_request.execute('Token refresh failure.')
         self._access_token = tokens['accessToken']
 
-    def auth(self):
+    async def auth(self):
         if self._refresh_token:
-            self.refresh()
-            self._auth()
+            await self.refresh()
+            await self._auth()
             return
         if self._access_token:
-            self._auth()
+            await self._auth()
             return
         if self._login and self._password:
-            self._tokens()
-            self._auth()
+            await self._tokens()
+            await self._auth()
             return
         if self._login:
             raise TokenError('Password required.')

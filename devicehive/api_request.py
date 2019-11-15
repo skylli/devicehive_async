@@ -64,8 +64,8 @@ class ApiRequest(object):
             return
         self._params['request_key'] = key
 
-    def subscription_request(self, subscription_api_request):
-        request = subscription_api_request.extract(self._uuid(), self._uuid())
+    async def subscription_request(self, subscription_api_request):
+        request = await subscription_api_request.extract(self._uuid(), self._uuid())
         self._params['subscription_request'] = request
 
     def response_subscription_id_key(self, key):
@@ -99,12 +99,12 @@ class ApiRequest(object):
     def response_key(self, key):
         self._params['response_key'] = key
 
-    def execute(self, error_message):
+    async def execute(self, error_message):
         request_id = self._uuid()
         request = self._request.copy()
         logger.debug('Request id: %s. Action: %s. Request: %s. Params: %s.',
                      request_id, self._action, request, self._params)
-        response = self._api.transport.request(request_id, self._action,
+        response = await self._api.transport.request(request_id, self._action,
                                                request, **self._params)
         api_response = ApiResponse(response, self._params['response_key'])
         logger.debug('Response id: %s. Action: %s. Success: %s. Response: %s.',
@@ -118,16 +118,20 @@ class ApiRequest(object):
 class AuthApiRequest(ApiRequest):
     """Auth api request class."""
 
-    def execute(self, error_message):
+    async def execute(self, error_message):
+
+        if not self._api.token.access_token:
+            await self._api.token.auth()
+
         self.header(*self._api.token.auth_header)
         try:
-            return super(AuthApiRequest, self).execute(error_message)
+            return await super(AuthApiRequest, self).execute(error_message)
         except ApiResponseError as api_response_error:
             if api_response_error.code != 401:
                 raise
-        self._api.token.auth()
+        await self._api.token.auth()
         self.header(*self._api.token.auth_header)
-        return super(AuthApiRequest, self).execute(error_message)
+        return await super(AuthApiRequest, self).execute(error_message)
 
 class SubscriptionApiRequest(object):
     """Subscription api request class."""
