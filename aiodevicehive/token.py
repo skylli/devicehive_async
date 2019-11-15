@@ -14,8 +14,8 @@
 # =============================================================================
 
 
-from devicehive.api_request import ApiRequest
-from devicehive.api_request import ApiRequestError
+from aiodevicehive.api_request import ApiRequest
+from aiodevicehive.api_request import ApiRequestError
 
 
 class Token(object):

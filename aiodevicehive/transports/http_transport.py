@@ -14,8 +14,8 @@
 # =============================================================================
 
 
-from devicehive.transports.transport import Transport
-from devicehive.transports.transport import TransportError
+from aiodevicehive.transports.transport import Transport
+from aiodevicehive.transports.transport import TransportError
 import aiohttp
 import threading
 import sys

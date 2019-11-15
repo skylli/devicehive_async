@@ -14,8 +14,8 @@
 # =============================================================================
 
 
-from devicehive.api_request import AuthApiRequest
-from devicehive.api_request import ApiRequestError
+from aiodevicehive.api_request import AuthApiRequest
+from aiodevicehive.api_request import ApiRequestError
 
 
 class Network(object):

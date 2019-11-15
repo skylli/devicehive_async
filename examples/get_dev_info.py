@@ -13,7 +13,7 @@
 # limitations under the License.
 # =============================================================================
 
-from devicehive.device_hive import DeviceHive
+from aiodevicehive.device_hive import DeviceHive
 import logging
 import aiohttp
 import asyncio
@@ -24,11 +24,13 @@ async def make_reqeust():
     login = 'sky'
     password = "sky9527"
     device_hive_api = DeviceHive(url, login=login, password=password)
-    info = await device_hive_api.get_current_user()
+    user = await device_hive_api.get_current_user()
+    info = await device_hive_api.create_long_token( user.id, minutes = 3, actions=["*"],
+                     network_ids=["*"], device_type_ids=["*"], device_ids=["*"])
     print(info)
     await device_hive_api.disconnect()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = logging.getLogger( __name__ )
 loop = asyncio.get_event_loop()
 loop.run_until_complete(make_reqeust())

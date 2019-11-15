@@ -14,7 +14,7 @@
 # =============================================================================
 
 
-from devicehive.transports.transport import TransportError
+from aiodevicehive.transports.transport import TransportError
 
 
 class ApiResponse(object):

@@ -14,7 +14,7 @@
 # =============================================================================
 
 
-from devicehive.api_request import AuthApiRequest
+from aiodevicehive.api_request import AuthApiRequest
 
 
 class Command(object):

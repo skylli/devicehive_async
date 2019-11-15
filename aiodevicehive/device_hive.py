@@ -14,12 +14,9 @@
 # =============================================================================
 
 
-from devicehive.handlers import  Handler
-from devicehive.api import Api
+from aiodevicehive.handlers import  Handler
+from aiodevicehive.api import Api
 import logging
-import time
-import six
-
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +60,7 @@ class DeviceHive(Api):
 
     def _init_transport(self):
         self._transport_name = self.transport_name(self._transport_url)
-        name = 'devicehive.transports.%s_transport' % self._transport_name
+        name = 'aiodevicehive.transports.%s_transport' % self._transport_name
         class_name = '%sTransport' % self._transport_name.title()
         transport_module = __import__(name, globals(), locals(), [name])
         transport_class = getattr(transport_module, class_name)

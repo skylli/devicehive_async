@@ -14,10 +14,10 @@
 # =============================================================================
 
 
-from devicehive.api_request import AuthApiRequest
-from devicehive.api_request import ApiRequestError
-from devicehive.network import Network
-from devicehive.device_type import DeviceType
+from aiodevicehive.api_request import AuthApiRequest
+from aiodevicehive.api_request import ApiRequestError
+from aiodevicehive.network import Network
+from aiodevicehive.device_type import DeviceType
 
 
 class User(object):

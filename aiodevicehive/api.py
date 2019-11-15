@@ -14,19 +14,20 @@
 # =============================================================================
 
 
-from devicehive.token import Token
-from devicehive.api_request import ApiRequest
-from devicehive.api_request import AuthApiRequest
-from devicehive.api_request import AuthSubscriptionApiRequest
-from devicehive.device import Device
-from devicehive.command import Command
-# from devicehive.notification import Notification
-# from devicehive.subscription import CommandsSubscription, \
+from aiodevicehive.token import Token
+from aiodevicehive.api_request import ApiRequest
+from aiodevicehive.api_request import AuthApiRequest
+from aiodevicehive.api_request import AuthSubscriptionApiRequest
+from aiodevicehive.device import Device
+from aiodevicehive.command import Command
+# from aiodevicehive.notification import Notification
+# from aiodevicehive.subscription import CommandsSubscription, \
 #     NotificationsSubscription
-from devicehive.network import Network
-from devicehive.device_type import DeviceType
-from devicehive.user import User
+from aiodevicehive.network import Network
+from aiodevicehive.device_type import DeviceType
+from aiodevicehive.user import User
 
+import datetime, logging
 
 class Api(object):
     """Api class."""
@@ -165,6 +166,12 @@ class Api(object):
                 'rest_server_url': info.get('restServerUrl'),
                 'websocket_server_url': info.get('webSocketServerUrl')}
 
+    async def get_server_str_utctime(self):
+        info = await self.get_info()
+        server_time = info.get("server_timestamp")
+        if server_time:
+            return server_time
+
     async def get_cluster_info(self):
         api_request = ApiRequest(self)
         api_request.url('info/config/cluster')
@@ -218,8 +225,24 @@ class Api(object):
         auth_api_request.action('token/create')
         auth_api_request.set('payload', payload, True)
         tokens = await auth_api_request.execute('Token refresh failure.')
+        print(tokens)
         return {'refresh_token': tokens['refreshToken'],
                 'access_token': tokens['accessToken']}
+
+    async def create_long_token(self, user_id, days = None,hours = None, minutes = None, **args):
+        params = {}
+        if days:
+            params["days"] = days
+        if hours:
+            params["hours"] = hours
+        if minutes:
+            params["minutes"] = minutes
+
+        server_time = await self.get_server_str_utctime()
+        expiration = (datetime.datetime.strptime(server_time, '%Y-%m-%dT%H:%M:%S.%f') + datetime.timedelta( **params )).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        print("Token will expiration in ", expiration)
+        res = await self.create_token(user_id, expiration, **args );
+        return res
 
     async def refresh_token(self):
         await self._token.refresh()

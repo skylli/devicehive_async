@@ -18,7 +18,7 @@ import sys
 import threading
 
 # todo
-from devicehive.handlers import Handler
+from aiodevicehive.handlers import Handler
 class Transport(object):
     """Transport class."""
 

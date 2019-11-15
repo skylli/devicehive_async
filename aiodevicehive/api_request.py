@@ -14,9 +14,9 @@
 # =============================================================================
 
 
-from devicehive.api_response import ApiResponse
-from devicehive.api_response import ApiResponseError
-from devicehive.transports.transport import TransportError
+from aiodevicehive.api_response import ApiResponse
+from aiodevicehive.api_response import ApiResponseError
+from aiodevicehive.transports.transport import TransportError
 import uuid
 import logging
 
